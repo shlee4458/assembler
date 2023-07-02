@@ -1,0 +1,5 @@
+(LOOP)
+@17
+D=M
+@LOOP
+D; JGE
