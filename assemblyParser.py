@@ -18,8 +18,12 @@ class AssemblyParser:
         Check if there are more commands in the input.
         return bool
         '''
-        return self.prevPosition != self.currPosition
-
+        res = self.prevPosition != self.currPosition
+        # TODO: decide whether to close the file once the end of the file is reached
+        if not res:
+            self.file.close()
+        return res
+    
     def advance(self):
         '''
         Reads the next command from the input and makes it the current
@@ -45,7 +49,14 @@ class AssemblyParser:
         C_COMMAND for dest=comp;jump
         L_COMMAND for (Xxx) where Xxx is a symbol.
         '''
-        firstChar = self.currentCommand[0]
+
+        firstChar = ""
+        if self.currentCommand:
+            firstChar = self.currentCommand[0]
+
+        # current line is either comment or an empty line
+        if not firstChar or firstChar == "/":
+            return ""
         
         if firstChar == "@":
             return "A_COMMAND"
@@ -71,21 +82,32 @@ class AssemblyParser:
         Returns the dest mnemonic in the current C-command (8 possibilities). 
         Should be called only when commandType() is C_COMMAND.
         '''
-        destMap = {"M": "001", "D": "010", "MD": "011", "A": "100",\
-                   "AM": "101", "AD": "110", "AMD": "111"}
+
         destination = self.currentCommand.split("=")[0]
         if destination == self.currentCommand:
             return "null"
-        return destMap[destination]
+        return destination
+    
+    def comp(self) -> str:
+        '''
+        Returns the comp mnemonic in the current C-command (28 possibilities).
+        Should be called only when commandType() is C_COMMAND
+        '''
+        if ";" in self.currentCommand:
+            compVal = self.currentCommand.split(";")[0]
+        elif "=" in self.currentCommand:
+            compVal = self.currentCommand.split('=')[-1]
+        return compVal
     
     def jump(self) -> str:
         '''
         Returns the jump mnemonic in the current C-command (8 possibilities). 
         Should be called only when commandType() is C_COMMAND.
         '''
-        jumpMap = {"JGT": "011", "JEQ": "010", "JGE": "011", "JLT": "100",\
-                   "JNE": "101", "JLE": "110", "JMP": "111"}
         jumpCond = self.currentCommand.split(";")[-1].strip()
         if jumpCond == self.currentCommand:
             return "null"
-        return jumpMap[jumpCond]
+        return jumpCond
+    
+    def getCommand(self):
+        return self.currentCommand
