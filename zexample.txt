@@ -1,0 +1,15 @@
+(HELLO)
+(K)
+(L)
+@R10
+D=M
+@17
+D=M
+@1
+M=D
+
+(HI)
+@HI
+
+@HELLO
+0;JMP

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-from assemblyParser import *
-from assemblyCode import *
+from AssemblyParser import *
+from AssemblyCode import *
+from SymbolTable import *
 import argparse
 
 DEBUG_MODE = False
@@ -13,10 +14,45 @@ def main():
     args = argParser.parse_args()
     filename = args.filename
 
-    # Load the file to the assembly parser
-    parser = AssemblyParser(filename)
+    # initiate symbol table
+    symbolTable = SymbolTable()    
 
-    with open('Prog.hack', "w") as output:
+    # First Pass
+    # In the first passing, keep the record of the ROM address in the symbol table
+    # each time a pseudocommand is encountered. increment the address record by 1 
+    # whenever a C_instruction or A_instruction is encountered.
+
+    # Load the file to the AssymblyParser
+    parser = AssemblyParser(filename)
+    address = 0
+
+    while parser.hasMoreCommands():
+        parser.advance()
+
+        type = parser.commandType()
+
+        # if it is comment or an empty line
+        if not type:
+            continue
+        
+        # if it is a_command or c_command increase the line
+        if type == "A_COMMAND" or type == "C_COMMAND":
+            address += 1
+            continue
+            
+        # if it is L command, store it to the symbol table
+        symbol = parser.symbol()
+        symbolTable.addEntry(symbol, address)
+        address += 1
+
+    # Second Pass
+    # When A instruction is encountered, where @xxx is not a number but a symbol,
+    # find in the symbolMap the number representation of the symbol
+    # if not store the variable in the symbolmap where n is the next available RAM address 
+    parser = AssemblyParser(filename)
+    destName = filename.split('.')[0] + ".hack"
+
+    with open(destName, "w") as output:
         line = 1
         
         # loop over each line of the file and write to the file the binary representation
@@ -47,11 +83,18 @@ def main():
             
             elif type == "A_COMMAND" or type == "L_COMMAND":
                 symbol = parser.symbol()
-                # TODO: translate symbol to decimal
+                # add to the table if the symbol is not an int or not in the symbol table
+                if not symbol.isnumeric() and not symbolTable.contains(symbol):
+                    symbolTable.addEntry(symbol, symbolTable.getNextAddress())
+
+                if symbolTable.contains(symbol):
+                    symbol = symbolTable.GetAddress(symbol)
                 res = (("0" * 16) + bin(int(symbol))[2:])[-16:] + "\n"
                 print(f"A_COMMAND/L_COMMAND was written: {res}")
                 output.write(res)
             line += 1
+
+
 
 if __name__ == "__main__":
     main()

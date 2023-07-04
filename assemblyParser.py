@@ -2,7 +2,6 @@
 Assembly Parser is a class that reads an assembly language command, parses it, 
 and provides convenient access to the command’s components (fields and symbols)
 """
-
 class AssemblyParser:
     
     def __init__(self, filename):
@@ -19,7 +18,6 @@ class AssemblyParser:
         return bool
         '''
         res = self.prevPosition != self.currPosition
-        # TODO: decide whether to close the file once the end of the file is reached
         if not res:
             self.file.close()
         return res
@@ -41,6 +39,10 @@ class AssemblyParser:
             
             # update the currentCommand
             self.currentCommand = line.strip()
+            
+            # if comment is in the currentCommand remove the string after '/'
+            if '//' in self.currentCommand:
+                self.currentCommand = self.currentCommand.split('//')[0].strip()
 
     def commandType(self) -> str:
         '''
@@ -82,7 +84,6 @@ class AssemblyParser:
         Returns the dest mnemonic in the current C-command (8 possibilities). 
         Should be called only when commandType() is C_COMMAND.
         '''
-
         destination = self.currentCommand.split("=")[0]
         if destination == self.currentCommand:
             return "null"
