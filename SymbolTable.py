@@ -35,3 +35,6 @@ class SymbolTable:
     
     def getNextAddress(self):
         return self.nextAddress
+
+    def setNextAddress(self):
+        self.nextAddress = 16

@@ -17,10 +17,7 @@ class AssemblyParser:
         Check if there are more commands in the input.
         return bool
         '''
-        res = self.prevPosition != self.currPosition
-        if not res:
-            self.file.close()
-        return res
+        return self.prevPosition != self.currPosition
     
     def advance(self):
         '''

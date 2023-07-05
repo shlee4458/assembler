@@ -3,6 +3,7 @@ from AssemblyParser import *
 from AssemblyCode import *
 from SymbolTable import *
 import argparse
+import os
 
 DEBUG_MODE = False
 
@@ -43,16 +44,18 @@ def main():
         # if it is L command, store it to the symbol table
         symbol = parser.symbol()
         symbolTable.addEntry(symbol, address)
-        address += 1
 
     # Second Pass
     # When A instruction is encountered, where @xxx is not a number but a symbol,
     # find in the symbolMap the number representation of the symbol
-    # if not store the variable in the symbolmap where n is the next available RAM address 
+    # if not store the variable in the symbolmap where n is the next available RAM address
     parser = AssemblyParser(filename)
-    destName = filename.split('.')[0] + ".hack"
+    destFileName = filename.split('/')[-1].split('.')[0]
+    destFileName = destFileName + ".hack"
+    destPath = os.path.join(os.getcwd(), "test", destFileName)
+    symbolTable.setNextAddress()
 
-    with open(destName, "w") as output:
+    with open(destPath, "w") as output:
         line = 1
         
         # loop over each line of the file and write to the file the binary representation
@@ -72,8 +75,7 @@ def main():
             if type == "C_COMMAND":
                 print("C was called")
                 dest, comp, jump = parser.dest(), parser.comp(), parser.jump()
-                a = "1" if ";" in parser.getCommand() else "0"
-                res = "111" + a + compBin(comp) + destBin(dest) + jumpBin(jump) + "\n"
+                res = "111" + compBin(comp) + destBin(dest) + jumpBin(jump) + "\n"
                 if DEBUG_MODE:
                     print(compBin(comp))
                     print(destBin(dest))
@@ -81,7 +83,7 @@ def main():
                 print(f"C_COMMAND was written: {res}")
                 output.write(res)
             
-            elif type == "A_COMMAND" or type == "L_COMMAND":
+            elif type == "A_COMMAND":
                 symbol = parser.symbol()
                 # add to the table if the symbol is not an int or not in the symbol table
                 if not symbol.isnumeric() and not symbolTable.contains(symbol):
@@ -89,6 +91,7 @@ def main():
 
                 if symbolTable.contains(symbol):
                     symbol = symbolTable.GetAddress(symbol)
+
                 res = (("0" * 16) + bin(int(symbol))[2:])[-16:] + "\n"
                 print(f"A_COMMAND/L_COMMAND was written: {res}")
                 output.write(res)
